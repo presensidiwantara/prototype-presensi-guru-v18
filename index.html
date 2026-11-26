@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f3d3e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Presensi Guru" />
+
+  <!-- OpenGraph / WhatsApp Link Preview dengan Ikon Logo Sekolah -->
+  <title>PRESENSI GURU - SMP N 1 Mekarjaya</title>
+  <meta name="description" content="Sistem Presensi Digital Terpadu & Analisis Kinerja Guru SMP N 1 Mekarjaya, Kab. Pandeglang." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="PRESENSI GURU - SMP N 1 Mekarjaya" />
+  <meta property="og:description" content="Aplikasi Presensi Live GPS, Galeri Kehadiran, Rekap A4 Otomatis, dan Analisis Kinerja Guru SMP N 1 Mekarjaya." />
+  <meta property="og:image" content="assets/logo-sekolah.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:image" content="assets/logo-sekolah.png" />
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="assets/logo-sekolah.png" />
+  <link rel="apple-touch-icon" href="assets/logo-sekolah.png" />
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Libraries: Chart.js, html2pdf.js, docx.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- =========================================================
+       1. HALAMAN FIRST TIME SETUP (AKTIVASI PERANGKAT PERTAMA)
+  ========================================================= -->
+  <section id="screen-setup" class="overlay-screen hidden">
+    <div class="setup-card">
+      <div class="setup-badge">AKTIVASI PERANGKAT BARU</div>
+      <img src="assets/logo-sekolah.png" alt="Logo SMP N 1 Mekarjaya" class="setup-logo dynamic-logo-sekolah" />
+      <h1 class="setup-title dynamic-app-title">PRESENSI GURU</h1>
+      <p class="setup-subtitle dynamic-app-subtitle">SMP N 1 Mekarjaya</p>
+      <p class="setup-desc">Masukkan kode akses aktivasi program untuk memulai penggunaan pada perangkat ini.</p>
+
+      <div class="form-group">
+        <label for="input-setup-code">Kode Akses Masuk Program</label>
+        <div class="password-wrapper">
+          <input type="password" id="input-setup-code" placeholder="Masukkan kode akses..." autocomplete="off" />
+          <button type="button" class="btn-eye" onclick="togglePassVisibility('input-setup-code')" aria-label="Lihat Kode">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <details class="setup-advanced">
+        <summary>Opsi Tautan Server (Opsional)</summary>
+        <div class="form-group" style="margin-top: 10px;">
+          <label for="input-setup-server">URL Web App Google Sheets</label>
+          <input type="url" id="input-setup-server" placeholder="https://script.google.com/macros/s/.../exec" />
+          <small class="hint-text">Dapat juga diatur nanti di menu Admin.</small>
+        </div>
+      </details>
+
+      <button type="button" id="btn-setup-enter" class="btn-primary btn-lg btn-block">
+        <span>Masuk Disini</span>
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <p id="setup-error" class="error-text hidden"></p>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       2. SPLASH SCREEN PEMBUKA BERKELAS
+  ========================================================= -->
+  <section id="screen-splash" class="overlay-screen splash-bg hidden">
+    <div class="splash-content">
+      <div class="splash-logo-ring">
+        <img src="assets/logo-sekolah.png" alt="Logo SMP N 1 Mekarjaya" class="splash-logo dynamic-logo-sekolah" />
+      </div>
+      <h1 class="splash-title dynamic-splash-title">PRESENSI GURU</h1>
+      <p class="splash-subtitle dynamic-splash-subtitle">SMP N 1 Mekarjaya</p>
+      <div class="splash-loader">
+        <div class="splash-bar"></div>
+      </div>
+      <p id="splash-status" class="splash-status-text">Memuat sistem & menyinkronkan data...</p>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. APLIKASI UTAMA
+  ========================================================= -->
+  <div id="main-app" class="app-shell hidden">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <img src="assets/logo-sekolah.png" alt="Logo" class="header-logo dynamic-logo-sekolah" />
+        <div class="header-titles">
+          <h1 class="main-title dynamic-app-title">PRESENSI GURU</h1>
+          <p class="sub-title dynamic-app-subtitle">SMP N 1 Mekarjaya</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" id="btn-sync-now" class="sync-pill online" title="Status Koneksi & Sinkronisasi">
+          <span class="sync-dot"></span>
+          <span id="sync-label">Online</span>
+        </button>
+        <button type="button" id="btn-fullscreen" class="icon-btn" title="Layar Penuh">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Banner Antrean Offline -->
+    <div id="offline-queue-banner" class="offline-banner hidden">
+      <span>⚠️ Terdapat <strong id="queue-count">0</strong> data presensi lokal menunggu sinyal internet untuk tersinkron otomatis.</span>
+    </div>
+
+    <!-- Main Scrollable Viewport -->
+    <main class="app-content">
+
+      <!-- =======================================================
+           MENU 2 (DEFAULT UTAMA): PRESENSI
+      ======================================================= -->
+      <section id="tab-presensi" class="tab-panel active">
+        <div class="section-header">
+          <h2>Presensi Harian Guru</h2>
+          <p>Pastikan waktu, lokasi GPS, dan kamera live aktif sebelum mengisi data.</p>
+        </div>
+
+        <!-- 3 FUNGSI WAJIB DI BAGIAN ATAS: WAKTU, LOKASI, KAMERA -->
+        <div class="card telemetry-card">
+          <div class="telemetry-grid">
+            <!-- 1. Waktu Real-time -->
+            <div class="telemetry-box">
+              <div class="telemetry-icon time-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="telemetry-info">
+                <span class="telemetry-label">WAKTU SERVER / PERANGKAT</span>
+                <div id="live-clock-time" class="telemetry-value-lg">--:--:--</div>
+                <div id="live-clock-date" class="telemetry-sub">Memuat hari & tanggal...</div>
+              </div>
+            </div>
+
+            <!-- 2. Tag Lokasi Otomatis -->
+            <div class="telemetry-box">
+              <div class="telemetry-icon loc-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div class="telemetry-info">
+                <span class="telemetry-label">TAG LOKASI GPS OTOMATIS</span>
+                <div id="live-coords" class="telemetry-value-md">Mendeteksi koordinat...</div>
+                <div id="live-radius-status" class="radius-badge neutral">Menghitung jarak sekolah...</div>
+              </div>
+              <button type="button" id="btn-refresh-gps" class="btn-mini" title="Perbarui GPS">↻</button>
+            </div>
+          </div>
+
+          <!-- 3. Kamera Live 4:3 Portrait (Tanpa Upload Galeri) -->
+          <div class="camera-section">
+            <div class="camera-header">
+              <span class="telemetry-label">KAMERA LIVE (RASIO 4:3 PORTRAIT • ANTI-GALERI)</span>
+              <span id="camera-status-badge" class="badge-live">● LIVE</span>
+            </div>
+
+            <div class="camera-frame-wrapper">
+              <div class="camera-viewport-4-3">
+                <video id="camera-video" autoplay playsinline muted></video>
+                <canvas id="camera-canvas" class="hidden"></canvas>
+                <img id="camera-preview" class="hidden" alt="Hasil Foto Live" />
+                <div id="camera-placeholder" class="camera-placeholder">
+                  <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <p>Mengaktifkan Kamera Live...</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="camera-controls">
+              <button type="button" id="btn-capture-photo" class="btn-primary">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>Ambil Foto Live</span>
+              </button>
+              <button type="button" id="btn-retake-photo" class="btn-secondary hidden">
+                <span>Ulangi Foto</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM ISIAN PRESENSI -->
+        <form id="form-presensi" class="card form-card" novalidate>
+          <div class="form-group">
+            <label for="presensi-guru">Nama Guru & NIP <span class="req">*</span></label>
+            <select id="presensi-guru" required>
+              <option value="">-- Pilih Nama Guru --</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Keterangan Kehadiran <span class="req">*</span></label>
+            <div class="category-pills">
+              <label class="pill-radio">
+                <input type="radio" name="kategori_presensi" value="Hadir" />
+                <span>Hadir</span>
+              </label>
+              <label class="pill-radio">
+                <input type="radio" name="kategori_presensi" value="Sakit" />
+                <span>Sakit</span>
+              </label>
+              <label class="pill-radio">
+                <input type="radio" name="kategori_presensi" value="Izin" />
+                <span>Izin</span>
+              </label>
+              <label class="pill-radio">
+                <input type="radio" name="kategori_presensi" value="Dinas Luar" />
+                <span>Dinas Luar</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Sub-pilihan HADIR -->
+          <div id="box-hadir" class="dynamic-subbox hidden">
+            <label>Status Presensi Hadir <span class="req">*</span></label>
+            <div class="sub-pills">
+              <label class="pill-radio">
+                <input type="radio" name="sub_hadir" value="Datang" />
+                <span>Datang</span>
+              </label>
+              <label class="pill-radio">
+                <input type="radio" name="sub_hadir" value="Pulang" />
+                <span>Pulang</span>
+              </label>
+            </div>
+            <p class="info-note">Wajib berada dalam radius maksimal <strong>500 meter</strong> dari titik koordinat SMP N 1 Mekarjaya.</p>
+          </div>
+
+          <!-- Sub-isian SAKIT -->
+          <div id="box-sakit" class="dynamic-subbox hidden">
+            <div class="form-group">
+              <label for="ket-sakit">Keterangan Sakit (Wajib Diketik) <span class="req">*</span></label>
+              <textarea id="ket-sakit" rows="3" placeholder="Tuliskan keterangan sakit secara jelas..."></textarea>
+            </div>
+          </div>
+
+          <!-- Sub-isian IZIN -->
+          <div id="box-izin" class="dynamic-subbox hidden">
+            <div class="form-group">
+              <label for="ket-izin">Keterangan Izin (Wajib Diketik) <span class="req">*</span></label>
+              <textarea id="ket-izin" rows="3" placeholder="Tuliskan alasan/keperluan izin secara jelas..."></textarea>
+            </div>
+          </div>
+
+          <!-- Sub-pilihan DINAS LUAR -->
+          <div id="box-dinas-luar" class="dynamic-subbox hidden">
+            <label>Jenis Presensi Dinas Luar <span class="req">*</span></label>
+            <div class="sub-pills">
+              <label class="pill-radio">
+                <input type="radio" name="sub_dl" value="Datang" />
+                <span>Datang (Berangkat)</span>
+              </label>
+              <label class="pill-radio">
+                <input type="radio" name="sub_dl" value="Pulang" />
+                <span>Pulang (Selesai)</span>
+              </label>
+            </div>
+
+            <!-- Dinas Luar: Datang -->
+            <div id="box-dl-datang" class="nested-subbox hidden">
+              <div class="form-group">
+                <label for="dl-kegiatan">Keterangan Kegiatan yang Dilakukan <span class="req">*</span></label>
+                <textarea id="dl-kegiatan" rows="2" placeholder="Tuliskan nama/deskripsi kegiatan dinas luar..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="dl-tempat">Tempat / Lokasi Tujuan Dinas Luar <span class="req">*</span></label>
+                <input type="text" id="dl-tempat" placeholder="Contoh: Dinas Pendidikan Kab. Pandeglang" />
+              </div>
+            </div>
+
+            <!-- Dinas Luar: Pulang -->
+            <div id="box-dl-pulang" class="nested-subbox hidden">
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="dl-catatan-pulang">Catatan Kegiatan yang Telah Dilakukan <span class="req">*</span></label>
+                  <span id="dl-word-counter" class="word-counter invalid">0 / 30 kata minimal</span>
+                </div>
+                <textarea id="dl-catatan-pulang" rows="4" placeholder="Uraikan hasil/catatan kegiatan dinas luar yang telah dilaksanakan (minimal 30 kata)..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-submit-presensi" class="btn-primary btn-lg btn-block">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Kirim Presensi Sekarang</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- =======================================================
+           MENU 3: GALERI FOTO LIVE (4:3 PORTRAIT, MAX 30/HAL)
+      ======================================================= -->
+      <section id="tab-galeri" class="tab-panel">
+        <div class="section-header">
+          <h2>Galeri Foto Presensi Live</h2>
+          <p>Dokumentasi foto real-time rasio 4:3 portrait (maksimal 30 foto per halaman).</p>
+        </div>
+
+        <div class="card filter-card">
+          <div class="filter-row">
+            <input type="search" id="galeri-search" placeholder="Cari nama guru, NIP, atau keterangan..." />
+          </div>
+          <div class="filter-row two-col">
+            <select id="galeri-filter-kategori">
+              <option value="ALL">Semua Kategori</option>
+              <option value="Hadir">Hadir (Semua)</option>
+              <option value="Hadir - Datang">Hadir - Datang</option>
+              <option value="Hadir - Pulang">Hadir - Pulang</option>
+              <option value="Sakit">Sakit</option>
+              <option value="Izin">Izin</option>
+              <option value="Dinas Luar">Dinas Luar (Semua)</option>
+              <option value="Dinas Luar - Datang">Dinas Luar - Datang</option>
+              <option value="Dinas Luar - Pulang">Dinas Luar - Pulang</option>
+            </select>
+            <select id="galeri-sort">
+              <option value="newest">Urut: Terbaru</option>
+              <option value="oldest">Urut: Terlama</option>
+              <option value="name_asc">Nama Guru (A-Z)</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <input type="date" id="galeri-filter-date" title="Filter tanggal tertentu" />
+          </div>
+        </div>
+
+        <div id="galeri-summary-bar" class="summary-strip">Menampilkan 0 foto</div>
+        <div id="galeri-grid" class="galeri-grid"></div>
+        <div id="galeri-pagination" class="pagination-bar"></div>
+      </section>
+
+      <!-- =======================================================
+           MENU 4: REKAP KEHADIRAN & CETAK / PDF / DOCX A4
+      ======================================================= -->
+      <section id="tab-rekap" class="tab-panel">
+        <div class="section-header">
+          <h2>Rekap Kehadiran Guru</h2>
+          <p>Laporan terstruktur mingguan, bulanan, dan tahunan siap cetak & unduh A4.</p>
+        </div>
+
+        <div class="card filter-card">
+          <div class="filter-row two-col">
+            <div class="form-group-compact">
+              <label for="rekap-period-type">Rentang Waktu</label>
+              <select id="rekap-period-type">
+                <option value="weekly">Mingguan (Pilih Pekan)</option>
+                <option value="monthly">Bulanan (Pilih Bulan)</option>
+                <option value="yearly">Tahunan (Pilih Tahun)</option>
+              </select>
+            </div>
+            <div class="form-group-compact">
+              <label for="rekap-period-value">Pilih Periode</label>
+              <select id="rekap-period-value"></select>
+            </div>
+          </div>
+
+          <div class="filter-row two-col">
+            <input type="search" id="rekap-search" placeholder="Cari nama atau NIP guru..." />
+            <select id="rekap-sort">
+              <option value="name_asc">Urut: Nama (A-Z)</option>
+              <option value="name_desc">Urut: Nama (Z-A)</option>
+              <option value="hadir_desc">Hadir Terbanyak</option>
+              <option value="jam_desc">Rata-rata Jam Kerja Tertinggi</option>
+              <option value="sakit_desc">Sakit Terbanyak</option>
+              <option value="izin_desc">Izin Terbanyak</option>
+              <option value="dl_desc">Dinas Luar Terbanyak</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <select id="rekap-group">
+              <option value="none">Pengelompokan: Semua Guru (Tanpa Grup)</option>
+              <option value="badge">Kelompokkan Berdasarkan Predikat Jam Kerja</option>
+              <option value="active">Kelompokkan Berdasarkan Status Kehadiran</option>
+            </select>
+          </div>
+
+          <div class="export-actions">
+            <button type="button" id="btn-print-rekap" class="btn-outline">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>Print A4</span>
+            </button>
+            <button type="button" id="btn-pdf-rekap" class="btn-danger-soft">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>Unduh PDF</span>
+            </button>
+            <button type="button" id="btn-docx-rekap" class="btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Unduh DOCX</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview Dokumen Resmi A4 -->
+        <div class="a4-scroll-wrapper">
+          <div id="printable-rekap-a4" class="a4-sheet">
+            <!-- Kop Surat Resmi -->
+            <table class="kop-table">
+              <tr>
+                <td class="kop-logo-cell">
+                  <img src="assets/logo-pandeglang.png" alt="Logo Kabupaten Pandeglang" class="kop-logo dynamic-logo-kabupaten" crossorigin="anonymous" />
+                </td>
+                <td class="kop-text-cell">
+                  <div class="kop-line-1">PEMERINTAH KABUPATEN PANDEGLANG</div>
+                  <div class="kop-line-2">DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA</div>
+                  <div class="kop-line-3">SMP N 1 MEKARJAYA</div>
+                  <div class="kop-line-4">Jln.Cibiuk KM.01 Desa Medong, Kec.Mekarjaya – Kab. Pandeglang ( 42252 )</div>
+                </td>
+                <td class="kop-logo-cell">
+                  <img src="assets/logo-sekolah.png" alt="Logo SMP N 1 Mekarjaya" class="kop-logo dynamic-logo-sekolah" crossorigin="anonymous" />
+                </td>
+              </tr>
+            </table>
+            <div class="kop-divider"></div>
+
+            <div class="doc-title-block">
+              <h3>REKAP KEHADIRAN GURU</h3>
+              <p id="doc-period-subtitle">Periode: Pekan Berjalan</p>
+            </div>
+
+            <div id="rekap-table-container"></div>
+
+            <!-- Blok Tanda Tangan Resmi -->
+            <table class="ttd-table">
+              <tr>
+                <td class="ttd-col">
+                  <p>Mengetahui,</p>
+                  <p>Kepala SMP N 1 Mekarjaya</p>
+                  <div class="ttd-space"></div>
+                  <p class="ttd-name">R. Dudi Romdiansah, M.Pd</p>
+                  <p class="ttd-nip">NIP. 19701102 199702 1 001</p>
+                </td>
+                <td class="ttd-col">
+                  <p id="ttd-date-line">Mekarjaya, 26 November 2026</p>
+                  <p>Wakasek Kurikulum</p>
+                  <div class="ttd-space"></div>
+                  <p class="ttd-name">Yana Fakhriyana, S.Pd</p>
+                  <p class="ttd-nip">NIP. 19760904 200801 1 007</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =======================================================
+           MENU 5: STATISTIK, LEADERBOARD & ANALISIS KINERJA
+      ======================================================= -->
+      <section id="tab-statistik" class="tab-panel">
+        <div class="section-header">
+          <h2>Statistik & Analisis Kinerja</h2>
+          <p>Evaluasi beban kerja minimal 37,5 jam/minggu, kedisiplinan waktu, dan apresiasi guru.</p>
+        </div>
+
+        <!-- Leaderboard Top 3 Pekan Sebelumnya -->
+        <div class="card leaderboard-card">
+          <div class="card-title-row">
+            <div>
+              <h3>🏆 Leaderboard Apresiasi Pekanan</h3>
+              <p id="leaderboard-week-label" class="sub-muted">Berdasarkan data pekan sebelumnya (Senin – Minggu)</p>
+            </div>
+          </div>
+          <div id="leaderboard-grid" class="leaderboard-grid"></div>
+        </div>
+
+        <!-- Filter Periode & Kategori Analisis -->
+        <div class="card filter-card">
+          <div class="filter-row two-col">
+            <div class="form-group-compact">
+              <label for="stat-period-type">Periode Analisis</label>
+              <select id="stat-period-type">
+                <option value="current_week">Pekan Berjalan</option>
+                <option value="weekly">Minggu (Pilih Pekan)</option>
+                <option value="monthly">Bulan (Pilih Bulan)</option>
+                <option value="yearly">Tahun (Pilih Tahun)</option>
+              </select>
+            </div>
+            <div class="form-group-compact">
+              <label for="stat-period-value">Detail Waktu</label>
+              <select id="stat-period-value"></select>
+            </div>
+          </div>
+
+          <div class="filter-row two-col">
+            <div class="form-group-compact">
+              <label for="stat-category">Kategori Analisis</label>
+              <select id="stat-category">
+                <option value="durasi">Durasi Jam Kerja</option>
+                <option value="kedatangan">Waktu Kedatangan (07:40)</option>
+                <option value="kepulangan">Waktu Kepulangan</option>
+                <option value="kehadiran">Frekuensi Kehadiran</option>
+              </select>
+            </div>
+            <div class="form-group-compact">
+              <label for="stat-subcategory">Subkategori Urutan</label>
+              <select id="stat-subcategory"></select>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <input type="search" id="stat-search" placeholder="Cari nama guru untuk melihat rincian individu..." />
+          </div>
+        </div>
+
+        <!-- Catatan Evaluasi Kelompok Otomatis -->
+        <div id="stat-group-insight" class="card insight-card"></div>
+
+        <!-- Diagram Visual Statistik -->
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <h4>Grafik Jam Kerja vs Target 37,5 Jam/Pekan</h4>
+            <div class="chart-box">
+              <canvas id="chart-work-hours"></canvas>
+            </div>
+          </div>
+          <div class="card chart-card">
+            <h4>Proporsi Kehadiran Kelompok</h4>
+            <div class="chart-box chart-box-sm">
+              <canvas id="chart-attendance-pie"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daftar Hasil Analisis Guru (Klik untuk Detail Individu) -->
+        <div class="card">
+          <div class="card-title-row">
+            <h3 id="stat-list-title">Peringkat & Analisis Individu</h3>
+            <span class="hint-pill">Ketuk nama guru untuk detail lengkap</span>
+          </div>
+          <div id="stat-teacher-list" class="stat-list"></div>
+        </div>
+      </section>
+
+      <!-- =======================================================
+           MENU 1: ADMIN (TERKUNCI KODE AKSES DIWANTARA02)
+      ======================================================= -->
+      <section id="tab-admin" class="tab-panel">
+        <!-- Gerbang Login Admin -->
+        <div id="admin-lock-screen" class="card admin-lock-card">
+          <div class="lock-icon-circle">
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Area Terbatas Administrator</h3>
+          <p>Masukkan kode akses menu Admin. Halaman ini otomatis terkunci kembali saat Anda berpindah menu.</p>
+          <div class="form-group">
+            <div class="password-wrapper">
+              <input type="password" id="input-admin-code" placeholder="Kode akses admin..." autocomplete="off" />
+              <button type="button" class="btn-eye" onclick="togglePassVisibility('input-admin-code')">👁</button>
+            </div>
+          </div>
+          <button type="button" id="btn-unlock-admin" class="btn-primary btn-block">Buka Pengaturan Admin</button>
+          <p id="admin-lock-error" class="error-text hidden"></p>
+        </div>
+
+        <!-- Panel Kontrol Admin (Terbuka setelah verifikasi) -->
+        <div id="admin-panel-content" class="hidden">
+          <div class="section-header row-between">
+            <div>
+              <h2>Panel Administrator</h2>
+              <p>Perubahan tersimpan permanen ke server dan otomatis berlaku di semua perangkat.</p>
+            </div>
+            <button type="button" id="btn-lock-admin-now" class="btn-secondary btn-sm">Kunci Menu</button>
+          </div>
+
+          <!-- 1. Server Google Sheets Web App -->
+          <div class="card admin-card">
+            <h3>1. Koneksi Server Google Sheets</h3>
+            <p class="sub-muted">Link Web App yang disimpan akan terkunci otomatis untuk seluruh perangkat pengguna.</p>
+            <div class="form-group">
+              <label for="admin-webapp-url">URL Google Apps Script Web App</label>
+              <input type="url" id="admin-webapp-url" placeholder="https://script.google.com/macros/s/.../exec" />
+            </div>
+            <div class="btn-row">
+              <button type="button" id="btn-save-server" class="btn-primary">Simpan & Kunci Server</button>
+              <button type="button" id="btn-test-server" class="btn-outline">Uji Koneksi & Tarik Data</button>
+            </div>
+          </div>
+
+          <!-- 2. Tag Lokasi Pusat Sekolah -->
+          <div class="card admin-card">
+            <div class="row-between">
+              <h3>2. Lokasi Pusat Sekolah (Radius 500m)</h3>
+              <span id="admin-loc-lock-badge" class="badge-locked">🔒 Terkunci</span>
+            </div>
+            <p class="sub-muted">Koordinat pusat disimpan permanen dengan format presisi agar pencocokan radius tidak pernah meleset.</p>
+
+            <div class="form-group">
+              <label for="admin-center-coords">Koordinat Pusat (Latitude, Longitude)</label>
+              <input type="text" id="admin-center-coords" placeholder="-6.391234, 105.981234" readonly />
+            </div>
+
+            <div class="btn-row">
+              <button type="button" id="btn-capture-center-gps" class="btn-outline" disabled>📍 Ambil Titik GPS Saat Ini</button>
+              <button type="button" id="btn-toggle-lock-loc" class="btn-secondary">Buka Kunci Lokasi</button>
+              <button type="button" id="btn-save-center-loc" class="btn-primary" disabled>Simpan & Kunci Lokasi</button>
+            </div>
+          </div>
+
+          <!-- 3. Identitas Program, Judul & Logo -->
+          <div class="card admin-card">
+            <h3>3. Identitas Program & Logo Instansi</h3>
+            <div class="filter-row two-col">
+              <div class="form-group">
+                <label for="admin-app-title">Judul Utama Program</label>
+                <input type="text" id="admin-app-title" value="PRESENSI GURU" />
+              </div>
+              <div class="form-group">
+                <label for="admin-app-subtitle">Sub Judul Program</label>
+                <input type="text" id="admin-app-subtitle" value="SMP N 1 Mekarjaya" />
+              </div>
+            </div>
+            <div class="filter-row two-col">
+              <div class="form-group">
+                <label for="admin-splash-title">Judul Splash Screen</label>
+                <input type="text" id="admin-splash-title" value="PRESENSI GURU" />
+              </div>
+              <div class="form-group">
+                <label for="admin-splash-subtitle">Sub Judul Splash Screen</label>
+                <input type="text" id="admin-splash-subtitle" value="SMP N 1 Mekarjaya" />
+              </div>
+            </div>
+
+            <div class="logo-upload-grid">
+              <div class="logo-upload-box">
+                <img src="assets/logo-sekolah.png" alt="Preview Logo Sekolah" id="preview-admin-logo-sekolah" class="dynamic-logo-sekolah" />
+                <label class="btn-outline btn-sm">
+                  Ganti Logo Sekolah
+                  <input type="file" id="upload-logo-sekolah" accept="image/*" hidden />
+                </label>
+              </div>
+              <div class="logo-upload-box">
+                <img src="assets/logo-pandeglang.png" alt="Preview Logo Kabupaten" id="preview-admin-logo-kab" class="dynamic-logo-kabupaten" />
+                <label class="btn-outline btn-sm">
+                  Ganti Logo Kab. Pandeglang
+                  <input type="file" id="upload-logo-kab" accept="image/*" hidden />
+                </label>
+              </div>
+            </div>
+
+            <button type="button" id="btn-save-branding" class="btn-primary btn-block" style="margin-top:12px;">Simpan Permanen Judul & Logo</button>
+          </div>
+
+          <!-- 4. Pengaturan Kode Akses (Terpisah) -->
+          <div class="card admin-card">
+            <h3>4. Pengaturan Kode Akses Keamanan</h3>
+            <p class="sub-muted">Kode akses masuk program (First Time Setup) harus berbeda dengan kode akses menu Admin.</p>
+            <div class="filter-row two-col">
+              <div class="form-group">
+                <label for="admin-new-setup-code">Kode Masuk Program (Setup)</label>
+                <input type="text" id="admin-new-setup-code" placeholder="Default: diwantara01" />
+              </div>
+              <div class="form-group">
+                <label for="admin-new-admin-code">Kode Menu Admin</label>
+                <input type="text" id="admin-new-admin-code" placeholder="Default: diwantara02" />
+              </div>
+            </div>
+            <button type="button" id="btn-save-access-codes" class="btn-primary">Perbarui Kode Akses</button>
+          </div>
+
+          <!-- 5. Manajemen Data Guru -->
+          <div class="card admin-card">
+            <h3>5. Manajemen Data Guru</h3>
+            <div class="filter-row two-col">
+              <div class="form-group">
+                <label for="guru-nama-input">Nama Lengkap Guru (dengan Gelar)</label>
+                <input type="text" id="guru-nama-input" placeholder="Contoh: R. Dudi Romdiansah, M.Pd" />
+              </div>
+              <div class="form-group">
+                <label for="guru-nip-input">NIP</label>
+                <input type="text" id="guru-nip-input" placeholder="Contoh: 19701102 199702 1 001" />
+              </div>
+            </div>
+            <input type="hidden" id="guru-edit-id" value="" />
+            <div class="btn-row">
+              <button type="button" id="btn-save-guru" class="btn-primary">Tambah Guru</button>
+              <button type="button" id="btn-cancel-edit-guru" class="btn-secondary hidden">Batal Edit</button>
+            </div>
+
+            <div class="form-group" style="margin-top: 14px;">
+              <input type="search" id="admin-search-guru" placeholder="Cari daftar guru..." />
+            </div>
+            <div id="admin-guru-list" class="admin-guru-list"></div>
+          </div>
+
+          <!-- 6. Reset Program (Parsial & Keseluruhan) -->
+          <div class="card admin-card danger-zone-card">
+            <h3>6. Reset Data & Sistem Program</h3>
+            <p class="sub-muted">Gunakan dengan hati-hati. Setiap aksi reset memerlukan konfirmasi ulang.</p>
+            <div class="reset-grid">
+              <button type="button" class="btn-outline-danger" onclick="promptReset('presensi')">Reset Data Presensi & Galeri</button>
+              <button type="button" class="btn-outline-danger" onclick="promptReset('guru')">Reset Data Guru</button>
+              <button type="button" class="btn-outline-danger" onclick="promptReset('branding')">Reset Logo & Judul Default</button>
+              <button type="button" class="btn-outline-danger" onclick="promptReset('local')">Bersihkan Cache Perangkat Ini</button>
+              <button type="button" class="btn-danger btn-block" onclick="promptReset('all')">⚠️ Reset Program Secara Keseluruhan</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- =========================================================
+         NAVIGASI BAWAH 5 MENU (TIDAK MENGHALANGI KONTEN SCROLL)
+    ========================================================= -->
+    <nav class="bottom-nav" aria-label="Navigasi Utama">
+      <button type="button" class="nav-item" data-tab="tab-admin">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Admin</span>
+      </button>
+
+      <button type="button" class="nav-item active" data-tab="tab-presensi">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Presensi</span>
+      </button>
+
+      <button type="button" class="nav-item" data-tab="tab-galeri">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>Galeri</span>
+      </button>
+
+      <button type="button" class="nav-item" data-tab="tab-rekap">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Rekap</span>
+      </button>
+
+      <button type="button" class="nav-item" data-tab="tab-statistik">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Statistik</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- =========================================================
+       MODALS INTERAKTIF (KONFIRMASI, DETAIL FOTO, DETAIL GURU)
+  ========================================================= -->
+  <!-- Modal Konfirmasi Umum -->
+  <div id="modal-confirm" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-warn-icon">⚠️</div>
+      <h3 id="modal-confirm-title">Konfirmasi Tindakan</h3>
+      <p id="modal-confirm-message">Apakah Anda yakin?</p>
+      <div class="modal-actions">
+        <button type="button" id="btn-confirm-cancel" class="btn-secondary">Batal</button>
+        <button type="button" id="btn-confirm-ok" class="btn-danger">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detail Foto Galeri -->
+  <div id="modal-photo" class="modal-backdrop hidden">
+    <div class="modal-box modal-photo-box">
+      <button type="button" class="modal-close" onclick="closeModal('modal-photo')">✕</button>
+      <div class="modal-photo-frame">
+        <img id="modal-photo-img" src="" alt="Foto Presensi" />
+      </div>
+      <div id="modal-photo-details" class="modal-photo-meta"></div>
+    </div>
+  </div>
+
+  <!-- Modal Detail Analisis Individu Guru -->
+  <div id="modal-teacher-detail" class="modal-backdrop hidden">
+    <div class="modal-box modal-lg">
+      <button type="button" class="modal-close" onclick="closeModal('modal-teacher-detail')">✕</button>
+      <div id="modal-teacher-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
